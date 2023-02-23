@@ -1,0 +1,416 @@
+
+CREATE DATABASE TicketsDB;
+
+CREATE TABLE Cities(
+	city_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+	city VARCHAR(70) NOT NULL,
+	zip_code  VARCHAR(7),
+	country VARCHAR(70) 
+);
+
+
+CREATE TABLE Users(
+	user_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+	first_name VARCHAR(50) NOT NULL,
+	last_name VARCHAR(50),
+	email_id VARCHAR(70) NOT NULL UNIQUE,
+	phone_no VARCHAR(12),
+	city_id INT,
+	picture VARBINARY(MAX),
+	user_type VARCHAR(30) NOT NULL,
+	password VARCHAR(30) NOT NULL,
+	reg_date DATE DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT FK_UserCity FOREIGN KEY(city_id)
+    REFERENCES Cities(city_id)
+);
+
+CREATE TABLE Properties(
+	property_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+	name VARCHAR(70) NOT NULL,
+	description VARCHAR(200),
+	city_id INT,
+	picture VARBINARY(MAX),
+	reg_date DATE DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT FK_PropertyCity FOREIGN KEY(city_id)
+    REFERENCES Cities(city_id)
+);
+
+CREATE TABLE Departments(
+	department_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+	name VARCHAR(70) NOT NULL,
+	location VARCHAR(70),
+	description varchar(200),
+	phone_no VARCHAR(12)
+);
+
+CREATE TABLE Tickets(
+	ticket_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+	user_id INT NOT NULL,
+	subject VARCHAR(70) NOT NULL,
+	description VARCHAR(200),
+	dept_id int NOT NULL,
+	property_id int NOT NULL,
+	picture VARBINARY(MAX),
+	priority int,
+	status_id INT NOT NULL,
+	date DATE DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT FK_UserTicket FOREIGN KEY(user_id)
+    REFERENCES Users(user_id),
+	CONSTRAINT FK_DeptTicket FOREIGN KEY(dept_id)
+    REFERENCES Departments(department_id),
+	CONSTRAINT FK_PropertyTicket FOREIGN KEY(property_id)
+    REFERENCES Properties(property_id)
+);
+
+CREATE TABLE Images(
+	image_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+	path VARCHAR(70) NOT NULL,
+	source_id int
+	CONSTRAINT FK_UserImage FOREIGN KEY(source_id)
+    REFERENCES Users(user_id),
+	CONSTRAINT FK_PropertyImage FOREIGN KEY(source_id)
+    REFERENCES Properties(property_id),
+	CONSTRAINT FK_TicketImage FOREIGN KEY(source_id)
+    REFERENCES Tickets(ticket_id)
+);
+
+CREATE TABLE Status(
+	status_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
+	status VARCHAR(70) NOT NULL
+);
+
+CREATE TABLE Employees(
+	user_id INT NOT NULL ,
+	dept_id INT NOT NULL,
+	CONSTRAINT FK_EmployeeUser FOREIGN KEY(user_id)
+    REFERENCES Users(user_id),
+	CONSTRAINT FK_EmployeeDept FOREIGN KEY(dept_id)
+    REFERENCES Departments(department_id),
+	CONSTRAINT PK_Employees PRIMARY KEY(user_id,dept_id)
+);
+
+CREATE TABLE Areas(
+	zip_code VARCHAR(7) PRIMARY KEY,
+	area_name VARCHAR(70) NOT NULL,
+	city_id INT NOT NULL
+	CONSTRAINT FK_AreaCity FOREIGN KEY(city_id)
+    REFERENCES Cities(city_id)
+);
+
+CREATE TABLE Feedbacks(
+	feedback_id INT IDENTITY(1,1) PRIMARY KEY,
+	user_id INT NOT NULL,
+	ticket_id INT ,
+	feedback VARCHAR(800),
+	feedback_date DATE DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT FK_FeedbackUser FOREIGN KEY(user_id)
+    REFERENCES Users(user_id),
+	CONSTRAINT FK_FeedbackTicket FOREIGN KEY(ticket_id)
+    REFERENCES Tickets(ticket_id)
+);
+
+CREATE TABLE Countries(
+	country_id INT IDENTITY(1,1) PRIMARY KEY,
+	country VARCHAR(70) NOT NULL);
+
+ALTER TABLE Cities 
+DROP COLUMN zip_code;
+
+ALTER TABLE Departments
+DROP COLUMN location,phone_no;
+
+ALTER TABLE Tickets
+ADD assigned_to INT;
+
+ALTER TABLE Tickets
+ADD CONSTRAINT FK_TicketEmployee FOREIGN KEY (assigned_to) 
+    REFERENCES Users(user_id);
+
+ALTER TABLE Users
+ADD last_modified DATE ;
+
+ALTER TABLE Departments
+ADD last_modified DATE ;
+
+ALTER TABLE Properties
+ADD last_modified DATE ;
+
+ALTER TABLE Tickets
+ADD last_modified DATE ;
+
+ALTER TABLE Feedbacks
+ADD last_modified DATE ;
+
+UPDATE Tickets 
+SET status_id = 1;
+
+ALTER TABLE Tickets
+ALTER COLUMN status_id INT NOT NULL ;
+
+
+INSERT INTO Status(status)
+          
+VALUES    ('New'),
+          ('Picked'),
+          ('In-process'),
+		  ('Completed');
+            
+GO
+
+ALTER TABLE Tickets
+ADD CONSTRAINT FK_TicketStatus FOREIGN KEY (status_id) 
+    REFERENCES Status(status_id);
+
+ALTER TABLE Tickets
+ALTER COLUMN description VARCHAR(800);
+
+ALTER TABLE Departments
+ALTER COLUMN description VARCHAR(800);
+
+ALTER TABLE Properties
+ALTER COLUMN description VARCHAR(800);
+
+ALTER TABLE Users
+ADD address VARCHAR(300);
+
+ALTER TABLE Users
+ADD zip_code VARCHAR(7);
+
+ALTER TABLE Properties
+ADD address VARCHAR(300);
+
+ALTER TABLE Properties
+ADD zip_code VARCHAR(7);
+
+ALTER TABLE Properties
+ADD CONSTRAINT FK_PropertiesArea FOREIGN KEY (zip_code) 
+    REFERENCES Areas(zip_code);
+
+ALTER TABLE Users
+ADD CONSTRAINT FK_UsersArea FOREIGN KEY (zip_code) 
+    REFERENCES Areas(zip_code);
+
+INSERT INTO Countries(country) VALUES ('South Africa'),('India'),('UK'),('United States of America'),('Argentina'),('Pakistan'),('Turkey'),('UAE');
+
+ALTER TABLE Cities DROP COLUMN country;
+
+ALTER TABLE Cities
+ADD country_id INT 
+
+
+ALTER TABLE Images
+ADD image_name VARCHAR(100) ;
+
+ALTER TABLE Images
+DROP CONSTRAINT FK_PropertyImage;
+
+ALTER TABLE Images
+DROP CONSTRAINT FK_UserImage;
+
+ALTER TABLE Images
+DROP CONSTRAINT FK_TicketImage;
+
+ALTER TABLE Images
+DROP COLUMN source_id;
+
+ALTER TABLE Images
+ADD CONSTRAINT FK_ImageTicket FOREIGN KEY(ticket_id) REFERENCES Tickets(ticket_id) ;
+
+ALTER TABLE Properties
+DROP CONSTRAINT FK_PropertyCity;
+
+ALTER TABLE Properties
+DROP COLUMN city_id;
+
+
+ALTER TABLE Properties
+DROP COLUMN picture;
+
+ALTER TABLE Tickets
+DROP COLUMN picture;
+
+ALTER TABLE Tickets
+DROP CONSTRAINT FK_DeptTicket;
+
+ALTER TABLE Tickets
+DROP COLUMN dept_id;
+
+
+
+
+ALTER TABLE Images
+ADD ticket_id INT ;
+
+
+
+ALTER TABLE Images
+DROP COLUMN path ;
+
+ALTER TABLE Images
+ADD path  VARBINARY(MAX);
+
+INSERT INTO Feedbacks(user_id,ticket_id,feedback)
+VALUES (4,2,'Thank You very much for the great service! Very supporting team! Keep it up!!'),
+       (9,5,'Great experience with you guys! Thanks for helping me! Appreciated!');
+
+INSERT INTO Cities(city,zip_code,country)
+          
+VALUES    ('JHB','2193','South Africa'),
+          ('Pune','395009','India'),
+          ('London','NW10AU','UK');
+            
+GO
+
+
+INSERT INTO Departments(name,location,description,phone_no)
+          
+VALUES    ('Water Supply','Bandra','Department to raise tickets regarding water supply problems','898989883'),
+          ('Electricity','Lonavla','Department to raise tickets regarding electricity problems','12829883'),
+          ('Garbage','Mumbra','Department to raise tickets regarding garbage problems','7013918291'),
+		  ('Maintainance','Andheri','Department to raise tickets regarding maintainance problems','98127382'),
+		  ('Equipments','Vasai','Department to raise tickets regarding equipments problems','11192032'),
+		  ('HR','Surat','Department to raise tickets regarding human resource problems','5561828812'),
+		  ('Service','Khandala','Department to raise tickets regarding services problems','271672632'),
+		  ('Nighbours','Udhna','Department to raise tickets regarding neighbours problems','981928121');
+            
+GO
+
+
+
+INSERT INTO Properties(name,description,city_id)
+          
+VALUES      ('Shalimar Fortleza','A HIGH RISE LUXURY DEVELOPMENT, PROMISING A WORLD CLASS LIFESTYLE.',2),
+			('Mirchandani Enclave','Coming soon',1),
+			('Triton','A building dedicated to showcasing a lifestyle focused on community building and pure opulence',5),
+			('Sunshine Villas','Year of Completion: 2007,Size: 325000 sq. ft. , Configuration: Villas',3),
+			('Premium Towers','Year of Completion: 2016, Size: 592000 sq. ft., Configuration: 3 & 4 BHK Homes',2),
+			('Shalimar Seven Gardens','Year of Completion: 2008, Size: 270000 sq. ft., : Row Houses',5),
+			('Adibas Bunglow Park','Year of Completion: 2002, Size: 240000 sq. ft., Configuration: Row Houses',1);
+            
+GO
+
+
+INSERT INTO Users(first_name,last_name,email_id,phone_no,city_id,user_type,password)
+          
+VALUES     ('Adiba','Siddiqui','adiba012@gmail.com','9016941931',2,'admin','kartik@012'),
+		   ('Habiba','Siddiqui','habba@gmail.com','898192891',3,'manager','habba123'),
+		   ('Kartik','Verma','vermag@gmail.com','9814345198',2,'manager','adiba@012'),
+		   ('John','Smith','johnas@gmail.com','66677172',5,'user','johnas1'),
+		   ('Daniel','Denis','ddaniel@gmail.com','11188281',4,'user','dd1234'),
+		   ('Kevin','Costner','kevincos@yahoo.com','67628121',2,'manager','kevin2'),
+		   ('Mary','McDonnell','mcmarrie@gmail.com','2221213',2,'user','marry20'),
+		   ('Sigourney','Weaver','siggweav198@yahoo.com','92827323',2,'user','sigg222'),
+		   ('Michael','Biehn','beihn754@gmail.com','7616212',2,'user','binnn90'),
+		   ('Paul','Reiser','paulr999@gmail.com','091821221',2,'manager','paul9090'),
+		   ('Lance','Henriksen','lancy23@gmail.com','01883133',2,'user','mancy6'),
+		   ('Bill','Paxton','billll000@outlook.com','213232321',2,'user','mybilliszero'),
+		   ('Daryl','Hannah','darylh@bbd.co.za','9898989898',2,'user','hannawahito');
+            
+GO
+
+
+
+INSERT INTO Tickets(user_id,subject,description,dept_id,property_id,status)
+          
+VALUES     (4,'Water Sink Problem ','Dust has been stucked into water pipeline',1,5,'new'),
+           (11,'Smelling Problem','Too much garbage near Gate-2',3,7,'solved'),
+		   (8,'Watchman','Last night watchman was not present at front gate',8,10,'in process');
+            
+GO
+
+
+
+--------------------------------------  SPs  ---------------------------------------------
+
+1. 
+CREATE PROCEDURE P_RAISE_TICKET ( @uid int, @sub VARCHAR(70), @desc VARCHAR(200), @deptid int, @propid int)
+AS
+  BEGIN
+      INSERT INTO Tickets(user_id,subject,description,dept_id,property_id,status_id) 
+                  VALUES(@uid,@sub,@desc,@deptid,@propid,4);
+  END
+
+
+EXEC P_RAISE_TICKET 9, 'Wires ', 'Copper wires were found on wall',2, 7;
+
+
+
+2. 
+CREATE PROCEDURE P_USERUPDATE ( @uid int, @fname VARCHAR(50), @lname VARCHAR(50), @mail VARCHAR(70))
+AS
+  BEGIN
+      UPDATE Users SET first_name=@fname, last_name=@lname,email_id=@mail WHERE user_id=@uid;
+  END
+
+EXEC P_USERUPDATE 2, 'Kartoo', 'Verma', 'karverma@gmail.com';
+
+
+
+
+---------------------------------------   UDFs --------------------------------------------------------
+
+1.
+CREATE FUNCTION GetUnsolvedTicketsCount()
+RETURNS int
+AS
+BEGIN
+  DECLARE @Cnt int
+
+	 SELECT @cnt = COUNT(*) FROM Tickets
+	 WHERE status_id <> 4
+	 ORDER BY COUNT(*) ;
+
+  RETURN @cnt
+END
+
+GO
+
+
+SELECT dbo.GetUnsolvedTicketsCount() AS 'Unsolved Count';
+ 
+2.
+CREATE FUNCTION GetManagers()
+RETURNS TABLE AS 
+RETURN
+SELECT user_id AS ID, CONCAT(first_name,' ',last_name) AS Name, email_id  FROM Users 
+	 WHERE user_type = 'manager'
+GO
+
+SELECT * FROM GetManagers();
+
+
+----------------------------------------  Views/Reports -------------------------------------------------------
+
+1.
+CREATE VIEW V_SolvedTickets AS
+SELECT ticket_id , CONCAT(first_name,' ',last_name) AS 'Raised by', subject, 
+       T.description,P.name AS 'Property Name'
+FROM Tickets T
+INNER JOIN Users U
+ON T.user_id = U.user_id
+INNER JOIN Properties P
+ON T.property_id = P.property_id
+WHERE status_id = 4;
+
+SELECT * FROM V_SolvedTickets ;
+
+
+2.
+CREATE VIEW V_PendingTickets AS
+SELECT ticket_id , CONCAT(first_name,' ',last_name) AS 'Raised by', subject, 
+       T.description,P.name AS 'Property Name'
+FROM Tickets T
+INNER JOIN Users U
+ON T.user_id = U.user_id
+INNER JOIN Properties P
+ON T.property_id = P.property_id
+WHERE status_id <> 4;
+
+
+SELECT * FROM V_PendingTickets ;
+
+
+
+
+
+
